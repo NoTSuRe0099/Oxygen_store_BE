@@ -3,7 +3,7 @@ import UserModel from '../models/UserSchema.js';
 
 export const verifyToken = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const { token } = req.cookies;
 
     if (!token) {
       return res.status(401).json({ success: false, message: 'Un-Authorized' });
@@ -11,14 +11,10 @@ export const verifyToken = async (req, res, next) => {
 
     const user = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await UserModel.findById(user?.id).catch((err) => {
-      return res.status(500).json({
-        success: false,
-        message: err.message,
-      });
-    });
-
-    console.log('req.user', req.user);
+    req.user = await UserModel.findById(user?.id).catch((err) => res.status(500).json({
+      success: false,
+      message: err.message,
+    }));
 
     next();
   } catch (error) {
@@ -29,15 +25,13 @@ export const verifyToken = async (req, res, next) => {
   }
 };
 
-export const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `Role: ${req.user.role} is not allowed to access this resouce `,
-      });
-    }
+export const authorizeRoles = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: `Role: ${req.user.role} is not allowed to access this resouce `,
+    });
+  }
 
-    next();
-  };
+  next();
 };

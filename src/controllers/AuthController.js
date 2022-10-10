@@ -1,10 +1,11 @@
-import User from '../models/UserSchema.js';
 import Cloudinary from 'cloudinary';
-const cloudinary = Cloudinary.v2;
+import User from '../models/UserSchema.js';
 import { asyncError } from '../middleware/errorMiddleware.js';
 
+const cloudinary = Cloudinary.v2;
+
 //* Register User
-export const Register = asyncError(async (req, res, next) => {
+export const Register = asyncError(async (req, res) => {
   try {
     const {
       username,
@@ -26,11 +27,12 @@ export const Register = asyncError(async (req, res, next) => {
         .json({ success: false, message: 'Email already registered' });
     }
 
-    if (!req?.files?.avatar)
+    if (!req?.files?.avatar) {
       return res.status(400).json({
         success: false,
         messasge: 'Please provide image in avatar*',
       });
+    }
 
     let avatar = await req?.files?.avatar;
 
@@ -84,42 +86,38 @@ export const Register = asyncError(async (req, res, next) => {
 
 //* Login User
 export const Login = asyncError(async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password');
+  const { email, password } = req.body;
+  const user = await User.findOne({ email }).select('+password');
 
-    if (!user) {
-      return res.json({
-        status: 'error',
-        message: 'Email not found',
-      });
-    }
-    const isMatch = await user.comparePassword(password);
-
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Password is incorrect',
-      });
-    }
-    const token = await user.generateToken();
-    const options = {
-      expires: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      httpOnly: true,
-    };
-    return res.status(200).cookie('token', token, options).json({
-      success: true,
-      message: 'Logged in successfully',
+  if (!user) {
+    return res.json({
+      status: 'error',
+      message: 'Email not found',
     });
-  } catch (error) {
-    console.log(error);
   }
+  const isMatch = await user.comparePassword(password);
+
+  if (!isMatch) {
+    return res.status(401).json({
+      success: false,
+      message: 'Password is incorrect',
+    });
+  }
+  const token = await user.generateToken();
+  const options = {
+    expires: new Date(Date.now() + 48 * 60 * 60 * 1000),
+    httpOnly: true,
+  };
+  return res.status(200).cookie('token', token, options).json({
+    success: true,
+    message: 'Logged in successfully',
+  });
 });
 
 //* Get User Profile
 export const myProfile = asyncError(async (req, res) => {
   try {
-    const id = req.id;
+    const { id } = req;
     const user = await User.findById(id);
     res.status(200).json({
       success: true,
@@ -134,7 +132,7 @@ export const myProfile = asyncError(async (req, res) => {
 });
 
 //* Logout User
-export const Logout = asyncError(async (req, res, next) => {
+export const Logout = asyncError(async (req, res) => {
   res.cookie('token', null, {
     expires: new Date(Date.now()),
     httpOnly: true,

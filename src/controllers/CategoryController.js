@@ -1,23 +1,24 @@
+import Cloudinary from 'cloudinary';
 import { asyncError } from '../middleware/errorMiddleware.js';
 import categoryModel from '../models/CategorySchema.js';
 import { categorySchema } from '../Validators/index.js';
-import Cloudinary from 'cloudinary';
-import { generateSlug, getDifference } from '../utils/utils.js';
+import { clearTempFiles, generateSlug, getDifference } from '../utils/utils.js';
+
 const cloudinary = Cloudinary.v2;
 
 //* Create Category ---> Admin
-export const create = asyncError(async (req, res, next) => {
+export const create = asyncError(async (req, res) => {
   const data = await categorySchema.validateAsync(req?.body);
 
   let reqImageArr = [];
   const imagesArr = [];
 
-  if (data)
-    if (!req?.files?.images)
-      return res.status(400).json({
-        success: false,
-        messasge: 'Please provide image in category_image*',
-      });
+  if (!req?.files?.images) {
+    return res.status(400).json({
+      success: false,
+      messasge: 'Please provide image in images*',
+    });
+  }
 
   let slug;
 
@@ -27,7 +28,7 @@ export const create = asyncError(async (req, res, next) => {
     slug = generateSlug(data?.name);
   }
 
-  const Exists = await categoryModel
+  const exists = await categoryModel
     .findOne({ name: data?.name, slug })
     .catch((err) => {
       res.status(400).json({
@@ -36,25 +37,40 @@ export const create = asyncError(async (req, res, next) => {
       });
     });
 
-  if (!Exists) {
-    if (!req?.files?.images?.name) {
-      reqImageArr = req?.files?.images;
-    } else {
-      reqImageArr.push(req?.files?.images);
-    }
+  if (!req?.files?.images?.name) {
+    reqImageArr = req?.files?.images;
+  } else {
+    reqImageArr.push(req?.files?.images);
+  }
 
-    for (const image of reqImageArr) {
-      const result = await cloudinary.uploader.upload(image.tempFilePath, {
-        folder: 'Oxygen-store/category',
-      });
+  if (!exists) {
+    await Promise.all(
+      await reqImageArr?.map(async (image) => {
+        const result = await cloudinary.uploader.upload(image.tempFilePath, {
+          folder: 'Oxygen-store/category',
+        });
 
-      imagesArr.push({
-        public_id: result?.public_id,
-        url: result?.secure_url,
-      });
-    }
+        imagesArr.push({
+          public_id: result?.public_id,
+          url: result?.secure_url,
+        });
+      })
+    );
 
-    return await categoryModel
+    // ? old loop --->
+    // for (const image of reqImageArr) {
+    //   const result = await cloudinary.uploader.upload(image.tempFilePath, {
+    //     folder: 'Oxygen-store/category',
+    //   });
+
+    //   imagesArr.push({
+    //     public_id: result?.public_id,
+    //     url: result?.secure_url,
+    //   });
+    // }
+
+    await clearTempFiles(reqImageArr);
+    const category = await categoryModel
       .create({
         ...data,
         slug,
@@ -63,12 +79,14 @@ export const create = asyncError(async (req, res, next) => {
       .then((cat) => {
         res.status(201).json(cat);
       });
-  } else {
-    return res.status(400).json({
-      success: false,
-      messasge: `"${data?.name}" Already exists`,
-    });
+
+    return category;
   }
+  await clearTempFiles(reqImageArr);
+  return res.status(400).json({
+    success: false,
+    messasge: `"${data?.name}" Already exists`,
+  });
 });
 
 //* Get all Categories
@@ -88,33 +106,49 @@ export const getAllCategories = asyncError(async (req, res, next) => {
 //* Update Category ---> Admin
 export const update = asyncError(async (req, res, next) => {
   let reqImageArr = [];
-  let imagesArr = [];
+  const imagesArr = [];
 
-  const exists = await categoryModel.findById(req?.params?.id).catch((err) => {
-    return res.status(500).json({
+  const exists = await categoryModel.findById(req?.params?.id).catch((err) =>
+    res.status(500).json({
       success: false,
       message: err.message,
-    });
-  });
+    })
+  );
+
+  if (req?.files?.images) {
+    if (!req?.files?.images?.name) {
+      reqImageArr = req?.files?.images;
+    } else {
+      reqImageArr.push(req?.files?.images);
+    }
+  }
 
   if (exists) {
-    if (req?.files?.images) {
-      if (!req?.files?.images?.name) {
-        reqImageArr = req?.files?.images;
-      } else {
-        reqImageArr.push(req?.files?.images);
-      }
+    if (reqImageArr.length > 0) {
+      await Promise.all(
+        await reqImageArr?.map(async (image) => {
+          const result = await cloudinary.uploader.upload(image.tempFilePath, {
+            folder: 'Oxygen-store/category',
+          });
 
-      for (const image of reqImageArr) {
-        const result = await cloudinary.uploader.upload(image.tempFilePath, {
-          folder: 'Oxygen-store/category',
-        });
+          imagesArr.push({
+            public_id: result?.public_id,
+            url: result?.secure_url,
+          });
+        })
+      );
 
-        imagesArr.push({
-          public_id: result?.public_id,
-          url: result?.secure_url,
-        });
-      }
+      // ?Old loop ------->
+      // for (const image of reqImageArr) {
+      //   const result = await cloudinary.uploader.upload(image.tempFilePath, {
+      //     folder: 'Oxygen-store/category',
+      //   });
+
+      //   imagesArr.push({
+      //     public_id: result?.public_id,
+      //     url: result?.secure_url,
+      //   });
+      // }
     }
 
     if (
@@ -130,7 +164,7 @@ export const update = asyncError(async (req, res, next) => {
       }
     }
 
-    let updatedImages = req?.body?.images
+    const updatedImages = req?.body?.images
       ? [...req?.body?.images]
       : exists?.images;
 
@@ -147,33 +181,32 @@ export const update = asyncError(async (req, res, next) => {
           new: true,
         }
       )
-      .catch((err) => {
-        return res.status(500).json({
+      .catch((err) =>
+        res.status(500).json({
           success: false,
           message: err?.message,
-        });
-      });
+        })
+      );
 
     return res.status(200).json({
       success: true,
       data: category,
     });
-  } else {
-    return res.status(404).json({
-      success: false,
-      message: 'Category Not Found',
-    });
   }
+  return res.status(404).json({
+    success: false,
+    message: 'Category Not Found',
+  });
 });
 
 //* Delete Category ---> Admin
 export const deleteCategory = asyncError(async (req, res, next) => {
-  const exists = await categoryModel.findById(req?.params?.id).catch((err) => {
-    return res.status(500).json({
+  const exists = await categoryModel.findById(req?.params?.id).catch((err) =>
+    res.status(500).json({
       success: false,
       message: err?.message,
-    });
-  });
+    })
+  );
 
   if (!exists) {
     return res.status(404).json({
@@ -182,12 +215,12 @@ export const deleteCategory = asyncError(async (req, res, next) => {
     });
   }
 
-  await categoryModel.findByIdAndDelete(req?.params?.id).catch((err) => {
-    return res.status(500).json({
+  await categoryModel.findByIdAndDelete(req?.params?.id).catch((err) =>
+    res.status(500).json({
       success: false,
       message: err?.message,
-    });
-  });
+    })
+  );
 
   if (exists?.images.length > 0) {
     for (const image of exists?.images) {
@@ -203,12 +236,12 @@ export const deleteCategory = asyncError(async (req, res, next) => {
 });
 
 export const getSingleCategory = asyncError(async (req, res, next) => {
-  const exists = await categoryModel.findById(req?.params?.id).catch((err) => {
-    return res.status(500).json({
+  const exists = await categoryModel.findById(req?.params?.id).catch((err) =>
+    res.status(500).json({
       success: false,
       message: err?.message,
-    });
-  });
+    })
+  );
 
   if (!exists) {
     return res.status(404).json({

@@ -7,11 +7,12 @@ import {
   update,
 } from '../controllers/CategoryController.js';
 import { authorizeRoles, verifyToken } from '../middleware/JWTService.js';
+
 const router = express.Router();
 
 router
   .route('/')
-  .get(verifyToken, getAllCategories)
+  .get(getAllCategories)
   .post(verifyToken, authorizeRoles('admin'), create);
 router
   .route('/:id')
