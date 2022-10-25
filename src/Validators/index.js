@@ -8,11 +8,12 @@ export const categorySchema = Joi.object({
 });
 
 export const productsSchema = Joi.object({
-  name: Joi.string().min(3).max(30).required(),
+  name: Joi.string().min(3).max(90).required(),
   description: Joi.string().min(3).max(2000).required(),
   slug: Joi.string().min(3).max(30),
   tags: Joi.array().items(Joi.string()),
   price: Joi.number().min(0).required(),
   category: Joi.string().required(),
   stock: Joi.number().required().min(0).max(10000),
+  discount: Joi.number().min(0).max(100),
 });

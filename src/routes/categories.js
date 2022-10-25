@@ -6,18 +6,18 @@ import {
   getSingleCategory,
   update,
 } from '../controllers/CategoryController.js';
-import { authorizeRoles, verifyToken } from '../middleware/JWTService.js';
+import {
+  authorizeRoles,
+  isAuthenticated,
+} from '../middleware/AuthMiddlewares.js';
 
 const router = express.Router();
 
-router
-  .route('/')
-  .get(getAllCategories)
-  .post(verifyToken, authorizeRoles('admin'), create);
+router.route('/').get(getAllCategories).post(create);
 router
   .route('/:id')
-  .put(verifyToken, authorizeRoles('admin'), update)
+  .put(update)
   .get(getSingleCategory)
-  .delete(verifyToken, authorizeRoles('admin'), deleteCategory);
+  .delete(isAuthenticated, authorizeRoles('admin'), deleteCategory);
 
 export default router;

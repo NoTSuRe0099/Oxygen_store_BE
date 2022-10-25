@@ -28,12 +28,12 @@ const productsSchema = new mongoose.Schema({
         public_id: {
           type: String,
           required: true,
-          unique: true,
         },
         url: {
           type: String,
           required: true,
         },
+        required: false,
       },
     ],
     required: false,
@@ -49,6 +49,16 @@ const productsSchema = new mongoose.Schema({
     required: [true, 'Please Enter product Stock'],
     maxLength: [4, 'Stock cannot exceed 4 characters'],
     default: 1,
+  },
+
+  tags: {
+    type: [String],
+    required: false,
+  },
+
+  discount: {
+    type: Number,
+    required: false,
   },
 });
 

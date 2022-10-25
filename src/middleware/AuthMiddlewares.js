@@ -1,11 +1,22 @@
 export const isAuthenticated = (req, res, next) => {
-  const token = req?.cookies['connect.sid'];
-
-  if (!token) {
+  if (!req.isAuthenticated()) {
     return res.status(401).json({
       success: false,
       message: 'Un-Authorized/no token',
     });
   }
-  next();
+  return next();
 };
+
+export const authorizeRoles =
+  (...roles) =>
+    (req, res, next) => {
+      if (!roles.includes(req.user.role)) {
+        return res.status(401).json({
+          success: false,
+          message: `Role: ${req.user.role} is not allowed to access this resouce `,
+        });
+      }
+
+      return next();
+    };

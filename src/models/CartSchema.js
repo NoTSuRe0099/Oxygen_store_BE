@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 
 const CartSchema = new mongoose.Schema(
   {
-    cart_user: {
-      type: String,
+    userId: {
+      type: mongoose.Types.ObjectId,
       required: true,
       ref: 'User',
       unique: true,
@@ -11,9 +11,15 @@ const CartSchema = new mongoose.Schema(
 
     cart_items: [
       {
+        required: false,
         product_id: {
-          type: String,
+          type: mongoose.Types.ObjectId,
           required: true,
+        },
+        product_qty: {
+          type: Number,
+          required: true,
+          default: 0,
         },
         // product_name: {
         //   type: String,
@@ -23,16 +29,12 @@ const CartSchema = new mongoose.Schema(
         //   type: Number,
         //   required: true,
         // },
-        product_qty: {
-          type: Number,
-          required: true,
-        },
       },
     ],
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 export default mongoose.model('Cart', CartSchema);

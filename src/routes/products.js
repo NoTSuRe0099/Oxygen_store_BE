@@ -6,19 +6,20 @@ import {
   getSingleProduct,
   createProduct,
 } from '../controllers/ProductsController.js';
-import { authorizeRoles, verifyToken } from '../middleware/JWTService.js';
+import {
+  authorizeRoles,
+  isAuthenticated,
+} from '../middleware/AuthMiddlewares.js';
 
 const router = express.Router();
-
-router
-  .route('/')
-  .get(verifyToken, getAllProducts)
-  .post(verifyToken, authorizeRoles('admin'), createProduct);
+// isAuthenticated,
+//   authorizeRoles('admin'),
+router.route('/').get(getAllProducts).post(createProduct);
 
 router
   .route('/:id')
-  .put(verifyToken, authorizeRoles('admin'), updateProduct)
+  .put(updateProduct)
   .get(getSingleProduct)
-  .delete(verifyToken, authorizeRoles('admin'), deleteProduct);
+  .delete(deleteProduct);
 
 export default router;

@@ -14,12 +14,12 @@ const categorySchema = new mongoose.Schema(
           public_id: {
             type: String,
             required: true,
-            unique: true,
           },
           url: {
             type: String,
             required: true,
           },
+          required: false,
         },
       ],
       required: false,
@@ -40,7 +40,7 @@ const categorySchema = new mongoose.Schema(
       required: false,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export default mongoose.model('Category', categorySchema);

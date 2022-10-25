@@ -81,7 +81,6 @@ export const createProduct = asyncError(async (req, res) => {
       messasge: `"${data?.name}" Already exists`,
     });
   }
-  return true;
 });
 
 //* Get All Products
@@ -151,7 +150,7 @@ export const updateProduct = asyncError(async (req, res) => {
       req?.body?.images &&
       req?.body?.images?.length < exists?.images?.length
     ) {
-      const deleteOldImages = getDifference(req?.body?.images, exists?.images);
+      const deleteOldImages = getDifference(exists?.images, req?.body?.images);
 
       if (deleteOldImages?.length > 0) {
         await Promise.all(
@@ -159,10 +158,6 @@ export const updateProduct = asyncError(async (req, res) => {
             await cloudinary.uploader.destroy(iamge?.public_id);
           })
         );
-
-        // for (const iamge of deleteOldImages) {
-        //   await cloudinary.uploader.destroy(iamge?.public_id);
-        // }
       }
     }
 
@@ -204,7 +199,7 @@ export const updateProduct = asyncError(async (req, res) => {
   });
 });
 
-//* Delete Category ---> Admin
+//* Delete Product ---> Admin
 export const deleteProduct = asyncError(async (req, res) => {
   const exists = await productsModel.findById(req?.params?.id).catch((err) =>
     res.status(500).json({
@@ -220,13 +215,6 @@ export const deleteProduct = asyncError(async (req, res) => {
     });
   }
 
-  await productsModel.findByIdAndDelete(req?.params?.id).catch((err) =>
-    res.status(500).json({
-      success: false,
-      message: err?.message,
-    })
-  );
-
   if (exists?.images.length > 0) {
     await Promise.all(
       await exists?.images?.map(async (iamge) => {
@@ -239,6 +227,14 @@ export const deleteProduct = asyncError(async (req, res) => {
     //   await cloudinary.uploader.destroy(image.public_id);
     // }
   }
+
+  await productsModel.findByIdAndDelete(req?.params?.id).catch((err) =>
+    res.status(500).json({
+      success: false,
+      message: err?.message,
+    })
+  );
+
   return res.status(202).json({
     success: true,
     message: `Deleted Product: ${exists?.name}`,
@@ -248,12 +244,7 @@ export const deleteProduct = asyncError(async (req, res) => {
 
 //* Get Single Products
 export const getSingleProduct = asyncError(async (req, res) => {
-  const exists = await productsModel.findById(req?.params?.id).catch((err) =>
-    res.status(500).json({
-      success: false,
-      message: err?.message,
-    })
-  );
+  const exists = await productsModel.findById(req?.params?.id);
 
   if (!exists) {
     return res.status(404).json({

@@ -155,17 +155,19 @@ export const update = asyncError(async (req, res, next) => {
       req?.body?.images &&
       req?.body?.images?.length < exists?.images?.length
     ) {
-      const deleteOldImages = getDifference(req?.body?.images, exists?.images);
+      const deleteOldImages = getDifference(exists?.images, req?.body?.images);
 
       if (deleteOldImages?.length > 0) {
-        for (const iamge of deleteOldImages) {
-          await cloudinary.uploader.destroy(iamge?.public_id);
-        }
+        await Promise.all(
+          await deleteOldImages?.map(async (iamge) => {
+            await cloudinary.uploader.destroy(iamge?.public_id);
+          })
+        );
       }
     }
 
     const updatedImages = req?.body?.images
-      ? [...req?.body?.images]
+      ? [...req.body.images]
       : exists?.images;
 
     const slug = req?.body?.slug
@@ -223,9 +225,11 @@ export const deleteCategory = asyncError(async (req, res, next) => {
   );
 
   if (exists?.images.length > 0) {
-    for (const image of exists?.images) {
-      await cloudinary.uploader.destroy(image?.public_id);
-    }
+    await Promise.all(
+      await exists?.images?.map(async (iamge) => {
+        await cloudinary.uploader.destroy(iamge?.public_id);
+      })
+    );
   }
 
   return res.status(202).json({

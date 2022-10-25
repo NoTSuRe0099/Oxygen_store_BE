@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
   },
   googleId: {
     type: String,
+    unique: true,
     required: false,
   },
   email: {
@@ -85,11 +86,12 @@ userSchema.methods.comparePassword = async function (password) {
   try {
     return await bcrypt.compare(password, this.password);
   } catch (err) {
-    console.log(err);
+    throw Error(err);
   }
 };
 
 userSchema.methods.generateToken = async function () {
+  // eslint-disable-next-line no-underscore-dangle
   const id = this._id;
   const token = jwt.sign({ id }, process.env.JWT_SECRET);
   return token;

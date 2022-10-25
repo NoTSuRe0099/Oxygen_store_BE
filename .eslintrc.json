@@ -13,9 +13,11 @@
   "rules": {
     "comma-dangle": "off",
     "implicit-arrow-linebreak": "off",
+    "linebreak-style": "off",
     "function-paren-newline": "off",
     "no-unused-vars": "warn",
     "operator-linebreak": "off",
+    "no-underscore-dangle": "off",
     "import/extensions": [
       "off",
       "ignorePackages",
