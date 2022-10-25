@@ -35,7 +35,7 @@ router.get(
   '/google/callback',
   passport.authenticate('google', {
     failureRedirect: '/api/v1/auth/login/failed',
-    successRedirect: 'http://localhost:3000/google/loginSucess',
+    successRedirect: `${process.env.FRONTEND_URL}/google/loginSucess`,
   })
 );
 
