@@ -1,7 +1,7 @@
 {
-  "name": "mern-sport-shop",
+  "name": "oxygen_store_backend",
   "version": "1.0.0",
-  "description": "E-Commerce MERN Project",
+  "description": "ECommerceMERNProject",
   "main": "index.js",
   "type": "module",
   "scripts": {
