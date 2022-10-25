@@ -29,7 +29,7 @@ app.use(
       'http://localhost:5173',
       'http://localhost:3000',
       'http://192.168.0.102:3000',
-      'https://oxygen-store-backend.herokuapp.com',
+      process.env.FRONTEND_URL,
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
