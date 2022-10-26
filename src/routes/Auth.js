@@ -47,18 +47,6 @@ router.get('/me', isAuthenticated, (req, res) =>
 );
 
 router.get('/logout', (req, res, next) => {
-  // req.logout((err) => {
-  //   if (!err) {
-  //     return res.status(200).json({
-  //       message: 'Logged Out',
-  //     });
-  //   }
-  //   return res.status(403).json({
-  //     success: false,
-  //     message: err?.message || err,
-  //   });
-  // });
-
   req.session.destroy((err) => {
     if (err) return next(err);
 
