@@ -21,19 +21,13 @@ const CartSchema = new mongoose.Schema(
           required: true,
           default: 0,
         },
-        // product_name: {
-        //   type: String,
-        //   required: true,
-        // },
-        // product_price: {
-        //   type: Number,
-        //   required: true,
-        // },
+        _id: false,
       },
     ],
   },
   {
     timestamps: true,
+    strict: true,
   }
 );
 

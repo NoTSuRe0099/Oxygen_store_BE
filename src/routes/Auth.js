@@ -8,6 +8,7 @@ import {
   Logout,
 } from '../controllers/AuthController.js';
 import { isAuthenticated } from '../middleware/AuthMiddlewares.js';
+import sendMail from '../utils/sendMail.js';
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.get(
   '/google/callback',
   passport.authenticate('google', {
     failureRedirect: '/api/v1/auth/login/failed',
-    successRedirect: `${process.env.FRONTEND_URL}/google/loginSucess`,
+    successRedirect: `${process.env.FRONTEND_URL}/google/loginSuccess`,
   })
 );
 
@@ -60,6 +61,13 @@ router.get('/logout', (req, res, next) => {
       message: 'Logged Out',
     });
   });
+});
+
+router.post('/sendMail', async (req, res) => {
+  const { receiver, subject, message } = req.body;
+  const info = await sendMail(receiver, subject, message);
+
+  res.send({ info });
 });
 
 export default router;
