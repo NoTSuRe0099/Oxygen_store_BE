@@ -36,7 +36,7 @@ router.get(
   '/google/callback',
   passport.authenticate('google', {
     failureRedirect: '/api/v1/auth/login/failed',
-    successRedirect: `${process.env.FRONTEND_URL}/google/loginSuccess`,
+    successRedirect: `${process.env.FRONTEND_URL}/googleLoginSuccess`,
   })
 );
 
